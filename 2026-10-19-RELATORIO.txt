@@ -1,0 +1,20 @@
+CONTEXTO E OBJETIVO
+Ao trazer o binário legado "telao" do fedora para o Ubuntu 24.04.5 LTS ele apresenta falhas na geração autônoma de áudio. O objetivo foi externalizar o controle de áudio, substituindo o tratamento interno por um sistema sincronizado guiado pela API web do sistema.
+
+DESCOBERTAS DO DIAGNOSTICO
+- A aplicação consome dados de endpoints HTTP (framework Yii) que aceitam métodos GET com parâmetros de autenticação e código do telão.
+- O binário dispara nativamente mensagens de log com gatilhos específicos (notify!, Play, fala) em suas rotinas de atualização, servindo como o gatilho apropriado para interceptação.
+- O ambiente de áudio do Linux (PulseAudio/ALSA) requer o isolamento correto da variável de ambiente (env -u LD_PRELOAD) para que a reprodução via paplay funcione de dentro de processos automatizados.
+
+MODIFICACOES REALIZADAS
+- Criação de um daemon autossuficiente em C++ (telao_audio_daemon) responsável por monitorar em tempo real os logs do binário legado utilizando um stream pipe (tail -F) para detecção imediata de eventos e gatilhos.
+- Consulta dinâmica à API web utilizando libcurl para extrair em tempo real as senhas ativas e o guichê (cod_senha, nm_senha, nm_guiche).
+- Implementação de controle rigoroso por ID numérico (long long maior_cod_visto) com sincronização inicial e ordenação cronológica (std::sort), garantindo o descarte de histórico antigo e o tratamento correto de chamadas simultâneas.
+- Ajuste na lógica de locução para múltiplas senhas na tela, introduzindo uma pausa sincronizada de 1,5 segundo (usleep(1500000)) entre os anúncios para evitar sobreposição nas caixas de som.
+- Implementação de decomposição inteligente de números (centenas, dezenas, unidades), corrigindo o mapeamento de números exatos (como 100 e 104) e o uso de conectores fonéticos locais (.wav) na pasta /home/ipam/Documentos/telao/som/.
+- Otimização do script de execução (run_telao.sh) com stdbuf -oL para garantir o fluxo de log em tempo real sem retenção em buffer.
+
+REQUISITOS DE FUNCIONAMENTO
+- Presença da biblioteca libcurl no sistema.
+- Binário compilado do daemon (telao_audio_daemon) com suporte a C++ e linkagem com -lcurl e -pthread.
+- Estrutura de arquivos de áudio .wav presente no diretório /home/ipam/Documentos/telao/som/.

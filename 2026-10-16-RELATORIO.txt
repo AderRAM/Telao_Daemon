@@ -1,0 +1,32 @@
+CONTEXTO E OBJETIVO
+O binario legado "telao" apresentava falhas na geracao autonoma de audio. O objetivo foi externalizar o controle de audio, substituindo o tratamento interno por um sistema sincronizado guiado pela API web do sistema.
+
+DESCOBERTAS DO DIAGNOSTICO
+
+A aplicacao consome dados de endpoints HTTP (framework Yii) que aceitam metodos GET com parametros de autenticacao e codigo do telao.
+
+O binario dispara nativamente mensagens de log com gatilhos especificos (`notify!`, `Play`, `fala`) em suas rotinas de atualizacao, servindo como o gatilho apropriado para interceptacao.
+
+O ambiente de audio do Linux (PulseAudio/ALSA) requer o isolamento correto da variavel de ambiente (`env -u LD_PRELOAD`) para que a reproducao via `paplay` funcione de dentro de processos automatizados.
+
+MODIFICACOES REALIZADAS
+
+Criacao de um daemon autossuficiente em C++ ("telao_audio_daemon") responsavel por gerenciar a execucao do binario legado e monitorar em tempo real o arquivo de controle de logs gerado.
+
+Consulta dinamica a API web utilizando "libcurl" para extrair em tempo real a senha mais recente (`cod_senha`, `nm_senha`) e o guiche (`nm_guiche`).
+
+Implementacao de logica nativa de decomposicao inteligente de numeros e tratamento de arquivos de audio locais (`.wav`) na pasta `/home/ipam/Documentos/telao/som/`, contemplando centenas, dezenas, unidades, arquivos compostos de ligacao (ex: `centoe.wav`) e o som inicial de notificacao (`notify.wav`).
+
+Tratamento robusto para ignorar caracteres especiais (como hífens) e evitar avisos de arquivos inexistentes no disco.
+
+Implementacao de controle de duplicidade (`ultimo_cod_senha`) para evitar que a mesma senha dispare multiplas locucoes em sequencia.
+
+Disparo sequencial sincronizado dos arquivos de audio utilizando `paplay` com isolamento de contexto de sessao e execucao em segundo plano (`&`) para nao congelar a interface do programa principal.
+
+REQUISITOS DE FUNCIONAMENTO
+
+Presenca da biblioteca libcurl no sistema.
+
+Binario compilado do daemon (`telao_audio_daemon`) com suporte a C++ e linkagem com `-lcurl`.
+
+Estrutura de arquivos de audio `.wav` devidamente populada no diretorio `/home/ipam/Documentos/telao/som/`.

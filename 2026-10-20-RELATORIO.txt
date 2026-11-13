@@ -1,0 +1,55 @@
+================================================================================
+GUIA DE INSTALAÇÃO E DEPENDÊNCIAS DE SOFTWARE (AMBIENTE UBUNTU 24.04.5 LTS)
+================================================================================
+
+Para que o novo daemon C++ (`telao_audio_daemon`) e o sistema externalizado de 
+áudio funcionem corretamente após a migração para o Ubuntu, o usuário/administrador 
+precisará instalar e configurar os seguintes componentes no sistema operacional:
+
+1. BIBLIOTECA DE DESENVOLVIMENTO HTTP (LIBCURL)
+--------------------------------------------------------------------------------
+O código do daemon utiliza a biblioteca libcurl para comunicação com a API web. 
+O pacote de desenvolvimento deve ser instalado para permitir a compilação:
+- Comando de instalação:
+  * sudo apt update && sudo apt install libcurl4-openssl-dev
+- Finalidade: Disponibiliza o header `<curl/curl.h>` e a biblioteca dinâmica de 
+  linkagem (`-lcurl`) exigida pelo compilador C++.
+
+2. SUPORTE A COMPILAÇÃO C++ E THREADS (GCC / PTHREAD)
+--------------------------------------------------------------------------------
+O daemon faz uso intensivo de concorrência (`std::thread`, `std::mutex`). 
+O ambiente precisa possuir o compilador GNU C++ e suporte a POSIX threads:
+- Comando de instalação (caso não estejam presentes):
+  * sudo apt install build-essential
+- Finalidade: Fornecer o compilador `g++` e a biblioteca de threads (`-lpthread`).
+
+3. UTILITÁRIOS DE ÁUDIO DO SISTEMA (PULSEAUDIO / ALSA)
+--------------------------------------------------------------------------------
+O comando `paplay` acionado pelo daemon para a reprodução dos arquivos `.wav` 
+requer os utilitários de som do PulseAudio/ALSA:
+- Comando de instalação:
+  * sudo apt install pulseaudio-utils alsa-utils
+- Finalidade: Disponibilizar o binário `paplay` no PATH do sistema para executar 
+  a locução das senhas e guichês de forma isolada (`env -u LD_PRELOAD`).
+
+4. FERRAMENTAS DE SUPORTE E MONITORAMENTO DE LOGS (COREUTILS / UTIL-LINUX)
+--------------------------------------------------------------------------------
+O script de execução e o daemon dependem de utilitários padrão de manipulação 
+de processos e streams de texto:
+- Pacotes geralmente nativos no Ubuntu, mas essenciais para verificação:
+  * `coreutils` (fornece comandos como `tail`, `stat`, `mv`, `sleep`, `stdbuf`)
+  * `util-linux` (fornece o comando `pkill` para encerramento seguro de instâncias)
+- Finalidade: Garantir que o pipeline de monitoramento de logs (`tail -F`) e o 
+  controle de buffer de linha (`stdbuf -oL`) operem sem interrupções.
+
+5. ESTRUTURA DE DIRETÓRIOS E ARQUIVOS DE ÁUDIO (.WAV)
+--------------------------------------------------------------------------------
+O usuário deve certificar-se de que a estrutura completa de arquivos de áudio 
+esteja descompactada ou copiada para o caminho absoluto esperado pelo código:
+- Diretório obrigatório: `/home/ipam/Documentos/telao/som/`
+- Conteúdo necessário: 
+  * Arquivos de aviso (`notify.wav`, `senha.wav`, `guiche.wav`)
+  * Alfabeto fonético completo (`a.wav` até `z.wav`)
+  * Conectores fonéticos especiais (`centoe.wav`, `duzentose.wav`, etc.)
+  * Numerais de 1 a 20, dezenas e centenas exatas.
+================================================================================

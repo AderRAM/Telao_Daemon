@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=Telao
+Exec=/opt/telao/telao
+Icon=/opt/telao/telao.png
+Categories=PMCS
+Terminal=false
+StartupNotify=true
